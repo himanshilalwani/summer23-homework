@@ -403,11 +403,10 @@ of integers.
 ```
 _·ℤ_ : ℤ → ℤ → ℤ
 -- Exercise:
-pos zero ·ℤ pos n₁ = pos zero
-pos (suc n) ·ℤ pos n₁ = pos (n · n₁)
-pos n ·ℤ negsuc n₁ = negsuc (n · n₁)
-negsuc n ·ℤ pos n₁ = negsuc (n · n₁)
-negsuc n ·ℤ negsuc n₁ = pos (n · n₁)
+pos zero ·ℤ m = pos zero
+pos (suc n) ·ℤ m = pos n +ℤ ( pos (n) ·ℤ m )
+negsuc zero ·ℤ m = - m
+negsuc (suc n) ·ℤ m = - m +ℤ (negsuc n) ·ℤ m
 ```
 
 # Extra:
