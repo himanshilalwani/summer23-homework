@@ -165,43 +165,53 @@ proving some useful equalities.
           (g : B → C)
           (f : A → B)
         → (h ∘ g) ∘ f ≡ h ∘ (g ∘ f)
-∘-assoc h g f i x = {!!}
+∘-assoc h g f = λ i x → h (g (f x))
 
 -- Exercise
 ∘-idˡ : (f : A → B) → f ∘ (λ a → a) ≡ f
-∘-idˡ f i x = {!!}
+∘-idˡ f = λ i x → f x
 
 -- Exercise
 ∘-idʳ : (f : A → B) → (λ b → b) ∘ f ≡ f
-∘-idʳ f i x = {!!}
+∘-idʳ f = λ i x → f x
 ```
 
 We can even show that `Bool` has the structure of a *Boolean algebra*.
 ```
 notnot : ∀ x → not (not x) ≡ x
-notnot x = {!!}
+notnot true = refl
+notnot false = refl  
 
 -- or properties
 or-zeroˡ : ∀ x → true or x ≡ true
-or-zeroˡ x = {!!}
+or-zeroˡ x = λ i → true
 
 or-zeroʳ : ∀ x → x or true ≡ true
-or-zeroʳ x = {!!}
+or-zeroʳ true = refl
+or-zeroʳ false = refl
 
 or-identityˡ : ∀ x → false or x ≡ x
-or-identityˡ x = {!!}
+or-identityˡ x = refl
 
 or-identityʳ : ∀ x → x or false ≡ x
-or-identityʳ x = {!!}
+or-identityʳ true = refl
+or-identityʳ false = refl
 
 or-comm      : ∀ x y → x or y ≡ y or x
-or-comm x y = {!!}
+or-comm true true = refl
+or-comm true false = refl
+or-comm false true = refl
+or-comm false false = refl
 
 or-assoc     : ∀ x y z → x or (y or z) ≡ (x or y) or z
-or-assoc x y z = {!!}
+or-assoc true true z = refl
+or-assoc true false z = refl
+or-assoc false true z = refl
+or-assoc false false z = refl
 
 or-idem      : ∀ x → x or x ≡ x
-or-idem x = {!!}
+or-idem true = refl
+or-idem false = refl
 ```
 
 OK, that's enough of that --- it's straightforward to keep going.
@@ -228,13 +238,13 @@ cong-bin : (f : A → B → C) {a a' : A} {b b' : B}
          → (q : b ≡ b')
          → (f a b) ≡ (f a' b')
 -- Exercise:
-cong-bin f p q = {!!}
+cong-bin f p q i =  f (p i) (q i)
 
 cong-∘ : (f : A → B) (g : B → C)
   → (p : x ≡ y)
   → cong (g ∘ f) p ≡ cong g (cong f p)
 -- Exercise:
-cong-∘ f g p = {!!}
+cong-∘ f g p i j =  g (f (p j))
 ```
 
 ## Paths in Pairs and Function Types
@@ -253,15 +263,15 @@ endpoints.
 ```
 ≡-× : {x y : A × B} → (fst x ≡ fst y) × (snd x ≡ snd y) → x ≡ y
 -- Exercise:
-≡-× (p , q) = {!!}
+≡-× (p , q) i = p i , q i
 
 ≡-fst : {x y : A × B} → x ≡ y → (fst x ≡ fst y)
 -- Exercise:
-≡-fst p = {!!}
+≡-fst p i = fst (p i)
 
 ≡-snd : {x y : A × B} → x ≡ y → (snd x ≡ snd y)
 -- Exercise:
-≡-snd p = {!!}
+≡-snd p i = snd (p i)
 ```
 
 Similarly, what is a path in a function type? It is a function landing
@@ -272,13 +282,13 @@ funExt : {f g : A → B}
   → ((x : A) → f x ≡ g x)
   → f ≡ g
 -- Exercise:
-funExt f = {!!}
+funExt p i x = p x i
 
 funExt⁻ : {f g : A → B}
   → f ≡ g
   → ((x : A) → f x ≡ g x)
 -- Exercise:
-funExt⁻ p = {!!}
+funExt⁻ p x i = p i x
 ```
 This is the principle of "function extensionality": to say that `f`
 equals `g` means that for all `x`, `f x` equals `g x`.
@@ -291,7 +301,7 @@ The `≡` constructor has low precedence, so `f x ≡ f y` means `(f x) ≡
 funExt2 : {f g : A → B → C}
        (p : (x : A) (y : B) → f x y ≡ g x y)
        → f ≡ g
-funExt2 p i x y = {!!}
+funExt2 p i x y = p x y i
 ```
 
 ## Isomorphisms
@@ -347,10 +357,12 @@ Iso-Bool-⊤⊎⊤ : Iso Bool (⊤ ⊎ ⊤)
 Iso-Bool-⊤⊎⊤ = iso Bool→⊤⊎⊤ ⊤⊎⊤→Bool s r
   where
     s : section Bool→⊤⊎⊤ ⊤⊎⊤→Bool
-    s x = {!!}
+    s (inl tt) i = inl tt
+    s (inr tt) i = inr tt
 
     r : retract Bool→⊤⊎⊤ ⊤⊎⊤→Bool
-    r x = {!!}
+    r true i = true
+    r false i = false
 
 -- Exercise:
 -- s x = ?
@@ -359,10 +371,10 @@ Iso-∅⊎ : ∀ {ℓ} (A : Type ℓ) → Iso (∅ ⊎ A) A
 Iso-∅⊎ A = iso (∅⊎-to A) (∅⊎-fro A) s r
   where
     s : section (∅⊎-to A) (∅⊎-fro A)
-    s x = {!!}
+    s x = refl
 
     r : retract (∅⊎-to A) (∅⊎-fro A)
-    r x = {!!}
+    r (inr b) = λ i → inr b
 
 -- Exercise:
 -- s x = ?
@@ -371,10 +383,12 @@ Iso-ℤ-ℕ⊎ℕ : Iso ℤ (ℕ ⊎ ℕ)
 Iso-ℤ-ℕ⊎ℕ = iso ℤ→ℕ⊎ℕ ℕ⊎ℕ→ℤ s r
   where
     s : section ℤ→ℕ⊎ℕ ℕ⊎ℕ→ℤ
-    s x = {!!}
+    s (inl a) = refl
+    s (inr b) = refl
 
     r : retract ℤ→ℕ⊎ℕ ℕ⊎ℕ→ℤ
-    r x = {!!}
+    r (pos n) = refl
+    r (negsuc n) = refl
 ```
 
 Not all isomorphisms will be so trivial. This one we need to construct
@@ -388,10 +402,12 @@ Iso-ℕ-List⊤ : Iso ℕ (List ⊤)
 Iso-ℕ-List⊤ = iso ℕ→List⊤ length s r
   where
     s : section ℕ→List⊤ length
-    s x = {!!}
+    s [] = refl
+    s (tt :: l) = cong (tt ::_)  (s l)
 
     r : retract ℕ→List⊤ length
-    r x = {!!}
+    r zero = refl
+    r (suc x) =  cong suc (r x)
 ```
 
 Not all isomorphisms have to go between different types. A type can be
@@ -405,10 +421,12 @@ not-Iso : Iso Bool Bool
 not-Iso = iso not not s r
   where
     s : section not not
-    s x = {!!}
+    s true = refl
+    s false = refl
 
     r : retract not not
-    r x = {!!}
+    r true = refl
+    r false = refl
 
 -- Exercise
 --  s x = ?
@@ -417,10 +435,14 @@ sucℤ-Iso : Iso ℤ ℤ
 sucℤ-Iso = iso sucℤ predℤ s r
   where
     s : section sucℤ predℤ
-    s x = {!!}
+    s (pos zero) = λ i → pos zero
+    s (pos (suc n)) = λ i → pos (suc n)
+    s (negsuc n) = λ i → negsuc n
 
     r : retract sucℤ predℤ
-    r x = {!!}
+    r (pos n) = λ i → pos n
+    r (negsuc zero) = λ i → negsuc zero
+    r (negsuc (suc n)) = λ i → negsuc (suc n)
 ```
 
 ## Substitution and Paths as Equalities
@@ -547,3 +569,4 @@ inr b1 ≡⊎ inr b2 = b1 ≡ b2
 ≡iff≡⊎ : {A B : Type} (x y : A ⊎ B) → (x ≡ y) iffP (x ≡⊎ y)
 ≡iff≡⊎ x y = {!!}
 ```
+ 
