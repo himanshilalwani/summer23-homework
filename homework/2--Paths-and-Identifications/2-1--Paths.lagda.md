@@ -152,6 +152,7 @@ for any element `x`, there is a constant path at `x`.
 ```
 refl : {A : Type ℓ} {x : A} → x ≡ x
 refl {x = x} i = x
+{-# INLINE refl #-}
 ```
 
 Interpreted as a statement about sameness, this means that `x` is the
@@ -438,7 +439,7 @@ sucℤ-Iso = iso sucℤ predℤ s r
     s (pos zero) = λ i → pos zero
     s (pos (suc n)) = λ i → pos (suc n)
     s (negsuc n) = λ i → negsuc n
-
+    
     r : retract sucℤ predℤ
     r (pos n) = λ i → pos n
     r (negsuc zero) = λ i → negsuc zero
@@ -470,7 +471,7 @@ able to "continuously move" an element `a : A i0` to some element of
 
 Cubical Agda axiomatizes this idea with a function called `transp`:
 
-`transp : ∀ (φ : I) (A : (i : I) → Type) (a : A i0) → A i1`
+`transp : ∀  (φ : I)(A : (i : I) → Type) (a : A i0) → A i1`
 
 The function transp is slightly more general than what we need (we'll see what role the φ plays later in Part 2). What we really need is this function called "transport":
 ```
@@ -512,7 +513,7 @@ Give it a try in the reverse:
 ```
 false≢true : ¬ false ≡ true
 -- Exercise
-false≢true p = {!!}
+false≢true p = subst (λ b → false ≡Bool b) p tt
 ```
 
 
@@ -525,10 +526,16 @@ the same thing as the equalities we define in 1-3!
 ≡iff≡Bool a b = (to a b) , (fro a b)
   where
     to : (x y : Bool) → (x ≡ y) → (x ≡Bool y)
-    to x y = {!!}
+    to true true = λ x → tt
+    to true false =  true≢false
+    to false true = false≢true
+    to false false = λ x → tt
 
     fro : (x y : Bool) → (x ≡Bool y) → (x ≡ y)
-    fro x y = {!!}
+    fro true true = λ x → refl
+    fro true false = λ x → ∅-rec x
+    fro false true = λ x → ∅-rec x
+    fro false false = λ x → refl
 ```
 
 You might be wondering whether we could promote the two maps `to` and
@@ -545,10 +552,17 @@ We can do the same for the other equalities we covered in 1-3.
 ≡iff≡ℕ a b = (to a b) , (fro a b)
   where
     to : (x y : ℕ) → (x ≡ y) → (x ≡ℕ y)
-    to x y = {!!}
+    to zero zero p = tt
+    to zero (suc y) p = subst (λ b → zero ≡ℕ b) p tt
+    to (suc x) zero p = subst (λ b → suc x ≡ℕ b) p (≡ℕ-refl x)
+    to (suc x) (suc y) p =  to x y (cong predℕ p)
+
+    to' : (x y : ℕ) → (x ≡ y) → (x ≡ℕ y)
+    to' x y p = subst (λ z → x ≡ℕ z) p (≡ℕ-refl x)
 
     fro : (x y : ℕ) → (x ≡ℕ y) → (x ≡ y)
-    fro x y = {!!}
+    fro zero zero p = refl
+    fro (suc x) (suc y) p = cong suc (fro x y p)
 ```
 
 Now that we have a notion of sameness - paths - valid in all types, we
@@ -563,10 +577,100 @@ inl a ≡⊎ inr b = ∅
 inr b ≡⊎ inl a = ∅
 inr b1 ≡⊎ inr b2 = b1 ≡ b2
 
+refl⊎ : {A B : Type} (x : A ⊎ B) → x ≡⊎ x
+refl⊎ (inl a) = refl
+refl⊎ (inr b) = refl
+
 -- Exercise
 -- ≡iff≡⊎ x y = ?
 -- Hint: can you see a way to define the forward direction using subst?
 ≡iff≡⊎ : {A B : Type} (x y : A ⊎ B) → (x ≡ y) iffP (x ≡⊎ y)
-≡iff≡⊎ x y = {!!}
+≡iff≡⊎ x y = (to x y) , (fro x y)
+  where
+    unl : (default : A) (x : A ⊎ B) → A
+    unl _ (inl a) = a
+    unl default (inr _) = default
+
+    unr : (default : B) (x : A ⊎ B) → B
+    unr _ (inr b) = b
+    unr default (inl _) = default
+    
+    to : (x y : A ⊎ B) → (x ≡ y) → (x ≡⊎ y)
+    to (inl a) (inl a₁) p = cong (unl a₁) p 
+    to (inl a) (inr b) p = subst (λ z → (inl a) ≡⊎ z) p refl
+    to (inr b) (inl a) p = subst ((inr b) ≡⊎_) p refl
+    to (inr b) (inr b₁) p = cong (unr b₁) p
+
+    to' : (x y : A ⊎ B) → (x ≡ y) → (x ≡⊎ y)
+    to' x y p = subst (λ z → x ≡⊎ z) p (refl⊎ x)
+
+    fro : (x y : A ⊎ B)→ (x ≡⊎ y) → (x ≡ y)
+    fro (inl a) (inl a₁) p = cong inl p
+    fro (inr b) (inr b₁) p = cong inr p
+     
 ```
+```
+_≡ℤ_ : (n m : ℤ) → Type
+pos n ≡ℤ pos n₁ = n ≡ℕ n₁
+pos n ≡ℤ negsuc n₁ = ∅
+negsuc n ≡ℤ pos n₁ = ∅
+negsuc n ≡ℤ negsuc n₁ = n ≡ℕ n₁
+
+≡ℤ-refl : (n : ℤ) → n ≡ℤ n
+≡ℤ-refl (pos n) = ≡ℕ-refl n
+≡ℤ-refl (negsuc n) = ≡ℕ-refl n
+
+≡iff≡ℤ : (a b : ℤ) → (a ≡ b) iffP (a ≡ℤ b)
+≡iff≡ℤ a b = (to a b) , (fro a b)
+  where
+    to : (x y : ℤ) → (x ≡ y) → (x ≡ℤ y)
+    to x y p = (subst (λ b → x ≡ℤ b) p (≡ℤ-refl x))
+
+    fro : (x y : ℤ) → (x ≡ℤ y) → (x ≡ y)
+    fro (pos n) (pos m) p = cong pos (≡iff≡ℕ n m .snd p)
+    fro (negsuc n) (negsuc m) p = cong negsuc (≡iff≡ℕ n m .snd p)
+```
+
+
+
+-- _≡ℤ_ : (n m : ℤ) → Type
+-- pos zero ≡ℤ pos zero = ⊤
+-- pos zero ≡ℤ pos (suc m) = ∅
+-- pos (suc n) ≡ℤ pos zero = ∅
+-- pos (suc n) ≡ℤ pos (suc m) = pos n ≡ℤ pos m
+-- pos zero ≡ℤ negsuc (suc n) = ∅
+-- pos n ≡ℤ negsuc zero = ∅
+-- pos (suc n) ≡ℤ negsuc (suc m) = ∅
+-- negsuc n ≡ℤ pos m = ∅
+-- negsuc zero ≡ℤ negsuc zero = ⊤
+-- negsuc zero ≡ℤ negsuc (suc m) = ∅
+-- negsuc (suc n) ≡ℤ negsuc zero = ∅
+-- negsuc (suc n) ≡ℤ negsuc (suc m) = negsuc n ≡ℤ negsuc m
+
+-- ≡ℤ-refl : (n : ℤ) → n ≡ℤ n
+-- -- Exercise:
+-- ≡ℤ-refl (pos zero) = tt
+-- ≡ℤ-refl (pos (suc n)) = ≡ℤ-refl (pos n)
+-- ≡ℤ-refl (negsuc zero) = tt
+-- ≡ℤ-refl (negsuc (suc n)) = ≡ℤ-refl (negsuc n)
+
+-- -- Exercise
+-- -- to x y p = ?
+-- -- fro x y p = ?
+-- ≡iff≡ℤ : (a b : ℤ) → (a ≡ b) iffP (a ≡ℤ b)
+-- ≡iff≡ℤ a b = (to a b) , (fro a b)
+--   where
+--     to : (x y : ℤ) → (x ≡ y) → (x ≡ℤ y)
+--     to x y p = (subst (λ b → x ≡ℤ b) p (≡ℤ-refl x))
+
+--     fro : (x y : ℤ) → (x ≡ℤ y) → (x ≡ y)
+--     fro (pos zero) (pos zero) p = refl
+--     fro (pos (suc n)) (pos (suc m)) p = cong sucℤ (fro (pos n) (pos m) p)
+--     fro (pos zero) (negsuc zero) p =  ∅-rec p
+--     fro (pos zero) (negsuc (suc m)) p = ∅-rec p
+--     fro (pos (suc n)) (negsuc zero) p = ∅-rec p
+--     fro (pos (suc n)) (negsuc (suc m)) p = ∅-rec p
+--     fro (negsuc zero) (negsuc zero) p = refl
+--     fro (negsuc (suc n)) (negsuc (suc m)) p = cong predℤ (fro (negsuc n) (negsuc m) p)
  
+

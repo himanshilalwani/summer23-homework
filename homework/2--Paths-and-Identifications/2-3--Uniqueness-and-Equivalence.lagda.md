@@ -70,7 +70,7 @@ contraction : {A : Type ℓ} (c : isContr A) (a : A) → center c ≡ a
 contraction c = snd c
 ```
 
-We should expect that singletons should be have a unique element,
+We should expect that singletons have a unique element,
 which is to say that singletons should be contractible.
 ```
 {- Hint: A square is necessary in the second component, draw it and
@@ -90,7 +90,7 @@ isContrSingl : (a : A) → isContr (singl a)
 isContrSingl a = (a , refl) , contract
   where
     contract : (y : singl a) → (a , refl) ≡ y
-    contract (x , p) = {!!}
+    contract (x , p) = λ i → p i , λ j → p (i ∧ j)
 ```
 
 We show that our type `⊤`, which was defined to have only a single
@@ -99,7 +99,7 @@ element `tt : ⊤`, is contractible.
 ```
 isContr⊤ : isContr ⊤
 -- Exercise
-isContr⊤ = {!!}
+isContr⊤ = tt , λ { tt → refl } 
 ```
 
 Any two contractible types are isomorphic. As a corollary, any
@@ -109,7 +109,7 @@ contractible type is isomorphic to `⊤`.
 isContr→Iso : {A : Type ℓ} {B : Type ℓ'} → isContr A → isContr B → Iso A B
 -- Exercise
 -- isContr→Iso c c' = ?
-isContr→Iso c c' = {!!}
+isContr→Iso c c' = iso (λ x → center c') (λ x → center c) (contraction c') (contraction c)
 
 isContrIso⊤ : {A : Type}  → isContr A → Iso A ⊤
 isContrIso⊤ c = isContr→Iso c isContr⊤
@@ -121,7 +121,7 @@ then it is contractible.
 ```
 iso⊤IsContr : {A : Type ℓ} → Iso A ⊤ → isContr A
 -- Exercise
-iso⊤IsContr the-iso = {!!}
+iso⊤IsContr the-iso = (g tt) , λ y → trans (cong g (snd isContr⊤ (f y))) (r y)
   where
     f = Iso.fun the-iso
     g = Iso.inv the-iso
@@ -134,7 +134,9 @@ We can show that there is in fact a unique map from `∅` to any type.
 ```
 ∅-rec-unique : {A : Type ℓ} → isContr (∅ → A)
 -- ∅-rec-unique = ?
-∅-rec-unique = {!!}
+∅-rec-unique = ∅-rec , λ f → funExt (pointwise f)
+  where pointwise : (f : ∅ → A) (x : ∅) → ∅-rec x ≡ f x
+        pointwise f ()
 ```
 
 
@@ -147,8 +149,8 @@ isContrRetract
   → (v : isContr B) → isContr A
 -- Exercise
 -- Hint: You'll need transitivity of paths.
-fst (isContrRetract f g h (b , p)) = {!!} 
-snd (isContrRetract f g h (b , p)) = {!!} 
+fst (isContrRetract f g h (b , p)) = g b 
+snd (isContrRetract f g h (b , p)) x = trans (cong g (p (f x))) (h x) 
 ```
 
 And we can show that if `B : A → Type` is a family of contractible types depending on `A`, then the type `(a : A) → B a` of functions is contractible.
@@ -157,8 +159,8 @@ isContrFun : ∀ {A : Type ℓ} {B : A → Type ℓ}
            → ((a : A) → isContr (B a))
            → isContr ((a : A) → B a)
 -- Exercise
-fst (isContrFun c) = {!!}
-snd (isContrFun c) f i a = {!!}
+fst (isContrFun c) = center ∘ c
+snd (isContrFun c) f i a = contraction (c a) (f a) i
 ```
 
 In particular, there is a unique map `A → ⊤`.
@@ -218,6 +220,14 @@ the fiber of the identity function over of point `a` is the singleton at
 choice to flip the direction of the path in the definition of
 fiber...).
 
+            a
+         x - - - > x
+         ^         ^
+    refl |         | p            ^
+         |         |            j |
+         x — — — > y              ∙ — >
+          p (~ i)                   i
+
 ```
 singl' : {A : Type} (a : A) → Type
 singl' {A = A} a = Σ[ x ∈ A ] (x ≡ a)
@@ -227,7 +237,8 @@ isContrSingl' : {A : Type} (a : A) → isContr (singl' a)
 isContrSingl' a = (a , refl) , contract
   where
     contract : (y : singl' a) → (a , refl) ≡ y
-    contract (x , p) i = {!!}
+    fst (contract (x , p) i) = p(~ i) 
+    snd (contract (x , p) i) j = p (j ∨ ~ i) 
 
 idIsEquiv : (A : Type) → isEquiv (idfun A)
 idIsEquiv A = λ y → isContrSingl' y
@@ -247,10 +258,10 @@ equivToIso : {A B : Type} → A ≃ B → Iso A B
 equivToIso e = iso (fst e) (inv e) (s e) (r e)
   where
     s : (e : A ≃ B) → section (fst e) (inv e)
-    s (e , is-equiv) y = {!!}
+    s (e , is-equiv) y = is-equiv y .fst .snd
 
     r : (e : A ≃ B) → retract (fst e) (inv e)
-    r (e , is-equiv) x i = {!!}
+    r (e , is-equiv) x i = contraction (is-equiv (e x)) (x , refl) i .fst
 ```
 
 There is in fact a way to turn an iso into an equivalence as well, but
@@ -320,7 +331,7 @@ The graph of a function is a functional relation --- hence the name.
 isFunctionalGraph : {A B : Type ℓ} (f : A → B) → isFunctional (graph f)
 -- Exercise:
 -- isFuncationalGraph f a = ?
-isFunctionalGraph f a = {!!}
+isFunctionalGraph f a = isContrSingl (f a)
 ```
 
 On the other hand, any functional relation gives rise to a function.
@@ -329,7 +340,7 @@ isFunctional→Fun : {A B : Type ℓ} (R : Rel A B) (c : isFunctional R)
                  → A → B
 -- Exercise:
 -- isFunctional→Fun R c a = ?
-isFunctional→Fun R c a = {!!}
+isFunctional→Fun R c a = fst (center (c a))
 ```
 
 We can show that the function we extract out of the graph of a
@@ -339,7 +350,7 @@ section-isFunctionalGraph→Fun : {A B : Type} (f : A → B)
       → isFunctional→Fun (graph f) (isFunctionalGraph f) ≡ f
 -- Exercise:v
 -- section-isFunctionalGraph→Fun f = ?
-section-isFunctionalGraph→Fun f = {!!}
+section-isFunctionalGraph→Fun f = refl
 ```
 
 We can show that, in the other direction, we get an isomorphism
@@ -367,7 +378,8 @@ graphEquivIsOneToOne : {A B : Type} (e : A ≃ B)
                      → isOneToOne (graph (fst e))
 -- Exercise
 -- graphEquivIsOneToOne e = ?
-graphEquivIsOneToOne (e , p) = {!!}
+graphEquivIsOneToOne (e , p) = (isFunctionalGraph e) , p
 ```
 
 We can also go the other way, but we'll need a few more tools in our toolbelt.
+ 

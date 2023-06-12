@@ -3,7 +3,7 @@
 module homework.2--Paths-and-Identifications.2-2--Path-Algebra-and-J where
 
 open import Cubical.Core.Primitives public
-open import Cubical.Foundations.Function using (idfun ; _∘_)
+open import Cubical.Foundations.Function using (idfun ; _∘_ ; _$_)
 
 
 open import homework.1--Type-Theory.1-1--Types-and-Functions
@@ -57,13 +57,17 @@ principle for paths:
 -- To see what the expression evaluates to,
 -- uncomment this block and move the cursor into the goal
 -- and press `C-c C-n`. (`C-n` for "normalise").
-{-
-_ : I
-_ = {! ~ i0!}
--}
+-- {-
+-- _ : I
+-- _ = {! ~ i0!}
+-- -}
 
 sym : x ≡ y → y ≡ x
 sym p i = p (~ i)
+{-# INLINE sym #-}
+
+sym' : x ≡ y → y ≡ x
+sym' {x = x} p = subst (λ z → z ≡ x) p refl 
 ```
 
 Now, there's a fairly evident question we can ask: what happens if we
@@ -167,13 +171,13 @@ module _ {A : Type ℓ} {B : A → Type ℓ'}
   where
 
   -- Exercise:
-  ΣPathP' : Σ[ p ∈ (fst x ≡ fst y) ] PathP {!!} {!!} {!!}
+  ΣPathP' : Σ[ p ∈ (fst x ≡ fst y) ] PathP ((λ i → B (p i))) (snd x) (snd y)
           → x ≡ y
   ΣPathP' eq i = fst eq i , snd eq i
 
   -- Exercise:
   PathPΣ' : x ≡ y
-          → Σ[ p ∈ (fst x ≡ fst y) ] PathP {!!} {!!} {!!}
+          → Σ[ p ∈ (fst x ≡ fst y) ] PathP (λ i → B (p i)) (snd x) (snd y)
   PathPΣ' eq = (λ i → fst (eq i)) , (λ i → snd (eq i))
 
 ```
@@ -188,13 +192,13 @@ module _ {A : I → Type ℓ} {B : (i : I) → A i → Type ℓ'}
   where
 
   -- Exercise:
-  ΣPathP : Σ[ p ∈ PathP {!!} {!!} {!!} ] PathP {!!} {!!} {!!}
+  ΣPathP : Σ[ p ∈ PathP A (fst x) (fst y) ] PathP (λ i → B i ((p i))) (snd x) (snd y)
          → PathP (λ i → Σ (A i) (B i)) x y
   ΣPathP eq i = fst eq i , snd eq i
 
   -- Exercise:
   PathPΣ : PathP (λ i → Σ (A i) (B i)) x y
-         → Σ[ p ∈ PathP {!!} {!!} {!!} ] PathP {!!} {!!} {!!}
+         → Σ[ p ∈ PathP A (fst x) (fst y) ] PathP ((λ i → B i ((p i)))) (snd x) (snd y)
   PathPΣ eq = (λ i → fst (eq i)) , (λ i → snd (eq i))
 ```
 
@@ -206,8 +210,8 @@ identical but the type improves:
 -- Exercise:
 depFunExt : {B : A → I → Type}
   {f : (x : A) → B x i0} {g : (x : A) → B x i1}
-  → ((x : A) → PathP {!!} {!!} {!!})
-  → PathP {!!} f g
+  → ((x : A) → PathP (λ i → B x i) (f x) (g x))
+  → PathP (λ i → (x : A) → B x i) f g
 depFunExt p i x = p x i
 ```
 
@@ -249,17 +253,30 @@ of `∨` and `∧` on the endpoints `i0` and `i1`: these hold
 definitionally.
 
 ```
+reflSquare1 : {A : Type ℓ} {a0 a1 : A}
+            → (p : a0 ≡ a1)
+            → Square refl refl p p
+reflSquare1 p = λ i → refl
+
+reflSquare2 : {A : Type ℓ} {a0 a1 : A}
+            → (p : a0 ≡ a1)
+            → Square p p refl refl
+reflSquare2 p = λ i j → p j
+
+```
+
+```
 -- Uncomment this block and try normalising the following expressions.
-{-
-_ : I
-_ = {! i0 ∨ i0!}
-_ : I
-_ = {! i0 ∨ i1!}
-_ : I
-_ = {! i0 ∧ i0!}
-_ : I
-_ = {! i0 ∧ i1!}
--}
+-- {-
+-- _ : I
+-- _ = {! i0 ∨ i0!}
+-- _ : I
+-- _ = {! i0 ∨ i1!}
+-- _ : I
+-- _ = {! i0 ∧ i0!}
+-- _ : I
+-- _ = {! i0 ∧ i1!}
+-- -}
 ```
 
 There are a few additional equalities which hold for `max` and `min`
@@ -325,30 +342,30 @@ connection∨ p i j = p (i ∨ j)
 Below we have drawn some more squares. Write them down in Cubical Agda
 below.
 
-           p⁻¹
-       x - - - > x
+           sym p
+       y - - - > x
        ^         ^
      p |         | refl            ^
        |         |               j |
-       x — — — > y                 ∙ — >
+       x — — — > x                 ∙ — >
           refl                       i
 
 ```
 connectionEx1 : (p : x ≡ y) → Square p refl refl (sym p)
 -- Exercise
-connectionEx1 p i j = {!!}
+connectionEx1 p i j = p (~ i ∧ j)  
 ```
             p
-        y - - - > y
+        x - - - > y
         ^         ^
-    p⁻¹ |         | refl            ^
+  sym p |         | refl            ^
         |         |               j |
-        y — — — > x                 ∙ — >
+        y — — — > y                 ∙ — >
            refl                       i
 ```
 connectionEx2 : (p : x ≡ y) → Square (sym p) refl refl p
 -- Exercise
-connectionEx2 p i j = {!!}
+connectionEx2 p i j = p (i ∨ ~ j)
 ```
 
 Our definition of ℤ is a little janky and off kilter --- we treat the
@@ -370,21 +387,29 @@ isomorphic to the ones we had before.
 ```
 ℤ'→ℤ : ℤ' → ℤ
 -- Exercise
-ℤ'→ℤ z = {!!}
+ℤ'→ℤ (pos' x) = pos x
+ℤ'→ℤ (neg' zero) = pos zero
+ℤ'→ℤ (neg' (suc x)) = negsuc x
+ℤ'→ℤ (poszero≡negzero i) = pos zero
 
 ℤ→ℤ' : ℤ → ℤ'
 -- Exercise
-ℤ→ℤ' z = {!!}
+ℤ→ℤ' (pos n) = pos' n
+ℤ→ℤ' (negsuc n) = neg' (suc n)
 
 ℤIsoℤ' : Iso ℤ ℤ'
 -- Exercise
 ℤIsoℤ' = iso ℤ→ℤ' ℤ'→ℤ s r
   where
     s : section ℤ→ℤ' ℤ'→ℤ
-    s z = {!!}
+    s (pos' x) = refl
+    s (neg' zero) = poszero≡negzero
+    s (neg' (suc x)) = refl
+    s (poszero≡negzero i) j = poszero≡negzero (i ∧ j)
 
     r : retract ℤ→ℤ' ℤ'→ℤ
-    r z = {!!}
+    r (pos n) = refl
+    r (negsuc n) = refl
 ```
 
 
@@ -395,7 +420,8 @@ fundamental but not so well known principle of identity: Martin Löf's
 J rule.
 
 ```
-J : (P : ∀ y → x ≡ y → Type ℓ) (r : P x refl)
+J : (P : ∀ y → x ≡ y → Type ℓ) 
+    (r : P x refl)
     (p : x ≡ y) → P y p
 J P r p = transport (λ i → P (p i) (λ j → p (i ∧ j))) r
 ```
@@ -412,7 +438,7 @@ For comparison:
   to prove `B true` and `B false`.
 * Induction for `ℕ`: To prove `P n` for all `n : ℕ`, it suffices to
   prove `P zero`, and `P (suc n)` assuming that `P n`.
-* Induction for paths: To prove `P y p` for all paths `p`, it suffices
+* Induction for paths: To prove `P y p` for all elements y and paths `p : x ≡ y`, it suffices
   to prove `P x refl`.
 
 The induction principle for `Bool` includes a convenient computation
@@ -425,6 +451,9 @@ a path and not a definitional equality.
 ```
 transportRefl : (x : A) → transport refl x ≡ x
 transportRefl {A = A} x i = transp (λ _ → A) i x
+
+substRefl : (P : A → Type ℓ) {x : A} (y : P x) → subst P refl y ≡ y
+substRefl P y = transportRefl y
 
 JRefl : (P : ∀ y → x ≡ y → Type ℓ) (r : P x refl)
       → J P r refl ≡ r
@@ -445,17 +474,18 @@ iff→Iso p s r = iso (fst p) (snd p) s r
 ≡Iso≡Bool a b = iff→Iso (≡iff≡Bool a b) (s a b) (r a b)
   where
     s : (x y : Bool) → section (fst (≡iff≡Bool x y)) (snd (≡iff≡Bool x y))
-    s p = {!!}
+    s true true tt = λ i → tt
+    s false false tt = λ i → tt
 
     r : (x y : Bool) → retract (fst (≡iff≡Bool x y)) (snd (≡iff≡Bool x y))
     r true y p =  J motive refl p
       where
         motive : ∀ z q → Type
-        motive z q = {!!}
+        motive z q = snd (≡iff≡Bool true z) (fst (≡iff≡Bool true z) q) ≡ q
     r false y p = J motive refl p
       where
         motive : ∀ z q → Type
-        motive z q = {!!}
+        motive z q = snd (≡iff≡Bool false z) (fst (≡iff≡Bool false z) q) ≡ q
 ```
 
 We similarly promote `≡iff≡ℕ` to an isomorphism, but it will be easier
@@ -496,7 +526,8 @@ then it should be easy to map out of it.
 ```
 -- Exercise:
 decodeℕ : (n m : ℕ) → codeℕ n m → n ≡ m
-decodeℕ n m c = {!!}
+decodeℕ zero zero _ = refl
+decodeℕ (suc n) (suc m) c = cong suc (decodeℕ n m c) 
 ```
 
 Then we prove that `encode` and `decode` form an isomorphism. This
@@ -514,10 +545,18 @@ case.
 ≡Iso≡ℕ n m = iso (encodeℕ n m) (decodeℕ n m) (s n m) (r n m)
   where
     s : (x y : ℕ) → section (encodeℕ x y) (decodeℕ x y)
-    s x y p = {!!}
-
+    s zero zero tt = refl
+    s (suc x) (suc y) p = s x y p
+    
     r : (x y : ℕ) → retract (encodeℕ x y) (decodeℕ x y)
-    r x y p = {!!}
+    r x y p = J motive base-case p
+       where
+        motive : {x : ℕ} (z : ℕ) (q : x ≡ z) → Type
+        motive {x} z q = decodeℕ x z (encodeℕ x z q) ≡ q
+
+        base-case : {x : ℕ} → motive x refl
+        base-case {zero} = refl
+        base-case {suc x} = λ i → cong suc (base-case {x} i) 
 ```
 
 Let's do the encode-decode method again, but for coproducts.
@@ -528,23 +567,77 @@ Let's do the encode-decode method again, but for coproducts.
 ≡Iso≡⊎ {A = A} {B = B} x y = iso (encode x y) (decode x y) (s x y) (r x y)
   where
     codeRefl : (c : A ⊎ B) → c ≡⊎ c
-    codeRefl c = {!!}
+    codeRefl (inl a) = refl
+    codeRefl (inr b) = refl
 
     encode : (x y : A ⊎ B) → x ≡ y → x ≡⊎ y
-    encode x y p = {!!}
+    encode x y p = subst (λ z → x ≡⊎ z) p (codeRefl x)
 
     encodeRefl : (c : A ⊎ B)  → encode c c refl ≡ codeRefl c
-    encodeRefl c = {!!}
+    encodeRefl c = substRefl (c ≡⊎_) (codeRefl c) 
 
     decode : (x y : A ⊎ B) → x ≡⊎ y → x ≡ y
-    decode x y p = {!!}
+    decode (inl a) (inl a₁) p = cong inl p
+    decode (inr b) (inr b₁) p = cong inr p
 
     decodeRefl : (c : A ⊎ B) → decode c c (codeRefl c) ≡ refl
-    decodeRefl c p = {!!}
+    decodeRefl (inl a) = refl
+    decodeRefl (inr b) = refl 
 
     s : (x y : A ⊎ B) → section (encode x y) (decode x y)
-    s x y = {!!}
+    s (inl a) (inl a₁) = J (λ a₁ p → (encode (inl a) (inl a₁) (cong inl p) ≡ p)) (encodeRefl (inl a))
+    s (inr b) (inr b₁) = J (λ b₁ p → (encode (inr b) (inr b₁) (cong inr p) ≡ p)) (encodeRefl (inr b)) 
 
-    r : (x y : A ⊎ B) → retract (encode x y) (decode x y)
-    r x y = {!!}
+    r : (x y : A ⊎ B) → retract (encode x y) (decode x y) 
+    r x y = J (λ y p → (decode x y (encode x y p) ≡ p)) (trans (cong (decode x x) (encodeRefl x)) (decodeRefl x))
+      
 ```
+ 
+ Let's do the encode-decode method again, but for integers.
+
+--  ```
+-- codeℤ : ℤ → ℤ → Type
+-- codeℤ n m = n ≡ℤ m
+
+-- codeℤRefl : (n : ℤ) → codeℤ n n
+-- codeℤRefl (pos zero) = tt
+-- codeℤRefl (pos (suc n)) = codeℤRefl (pos n)
+-- codeℤRefl (negsuc zero) = tt
+-- codeℤRefl (negsuc (suc n)) = codeℤRefl (negsuc n)
+
+-- encodeℤ : (n m : ℤ) → n ≡ m → codeℤ n m
+-- encodeℤ n m p = subst (λ z → codeℤ n z) p (codeℤRefl n)
+
+-- decodeℤ : (n m : ℤ) → codeℤ n m → n ≡ m
+-- decodeℤ (pos zero) (pos zero) = λ x i → pos zero
+-- decodeℤ (pos zero) (pos (suc m)) = ∅-rec
+-- decodeℤ (pos (suc n)) (pos zero) = ∅-rec
+-- decodeℤ (pos (suc n)) (pos (suc m)) p = cong sucℤ (decodeℤ (pos n) (pos m) p) 
+-- decodeℤ (pos n) (negsuc m) = ∅-rec
+-- decodeℤ (negsuc n) (pos m) = ∅-rec
+-- decodeℤ (negsuc zero) (negsuc zero) = λ x i → negsuc zero
+-- decodeℤ (negsuc zero) (negsuc (suc m)) = ∅-rec
+-- decodeℤ (negsuc (suc n)) (negsuc zero) = ∅-rec
+-- decodeℤ (negsuc (suc n)) (negsuc (suc m)) p = cong predℤ (decodeℤ (negsuc n) (negsuc m) p)
+
+-- ≡Iso≡ℤ : (n m : ℤ) → Iso (n ≡ m) (n ≡ℤ m)
+-- ≡Iso≡ℤ n m = iso (encodeℤ n m) (decodeℤ n m) (s n m) (r n m)
+--   where
+--     s : (x y : ℤ) → section (encodeℤ x y) (decodeℤ x y)
+--     s (pos zero) (pos zero) tt = refl
+--     s (pos (suc n)) (pos (suc n₁)) p = {!  !}
+--     s (negsuc zero) (negsuc zero) tt = refl
+--     s (negsuc (suc n)) (negsuc (suc n₁)) p = {!   !}
+    
+--     r : (x y : ℤ) → retract (encodeℤ x y) (decodeℤ x y)
+--     r x y p = J motive base-case p
+--        where
+--         motive : {x : ℤ} (y : ℤ) (p : x ≡ y) → Type
+--         motive {x} y p = decodeℤ x y (encodeℤ x y p) ≡ p
+
+--         base-case : {x : ℤ} → motive x refl
+--         base-case {pos zero} = λ i → refl
+--         base-case {pos (suc n)} = λ i → cong sucℤ (base-case {pos (n)} i)
+--         base-case {negsuc zero} = λ i → refl
+--         base-case {negsuc (suc n)} = λ i → cong predℤ (base-case {negsuc (n)} i)
+-- ```
