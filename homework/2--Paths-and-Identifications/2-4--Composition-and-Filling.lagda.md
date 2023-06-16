@@ -686,7 +686,7 @@ cube whose top face is the path-between-paths that we want.
               w - - - - - - - - > w
                       refl
 
-            (r ∙ p) ∙ q
+            r ∙ (p ∙ q)
           w ∙ ∙ ∙ > z
           ^         ^
      refl |         | q        ^
@@ -696,8 +696,8 @@ cube whose top face is the path-between-paths that we want.
 ```
 assoc-faces : {w x y z : A} (r : w ≡ x) (p : x ≡ y) (q : y ≡ z) → (i : I) → (j : I) → (k : I) → Partial (∂ i ∨ ∂ j) A
 -- Exercise
-assoc-faces         r p q i j k (i = i0) = (r ∙ (p ∙ q)) {!  !}
-assoc-faces         r p q i j k (i = i1) = {!  !} 
+assoc-faces         r p q i j k (i = i0) = (r ∙ compPath-filler p q k) j
+assoc-faces         r p q i j k (i = i1) = compPath-filler (r ∙ p) q k j 
 assoc-faces {w = w} r p q i j k (j = i0) = w
 assoc-faces         r p q i j k (j = i1) = q k
 
@@ -768,6 +768,40 @@ Here's an open ended problem that requires using two `hcomps`. Try and figure ou
 isContrisContr≡ : {A : Type ℓ} (c : isContr A) (a b : A) → isContr (a ≡ b)
 -- Hint: You should use an `hcomp` for both halves. Draw them out!
 -- Hint 2: In the second component, you only need three sides of a cube.
-isContrisContr≡ (c₀ , c) a b = (λ i → {!  !}) , {!!}
+isContrisContr≡ (c₀ , c) a b = patha≡b (c a) (c b) , λ y i j → hcomp (λ { k (i = i1) → c (y j) k ;  k (j = i0) → c a k ; k (j = i1) → c b k}) c₀
+  where
+    patha≡b : (p : c₀ ≡ a) (q : c₀ ≡ b) → a ≡ b
+    patha≡b p q i = hcomp (λ { j (i = i0) → p j ; j (i = i1) → q j }) (c₀)
 ```
- 
+  
+                    refl
+                b - - - - - - - - > b
+              / ^                 / ^
+          y /   |            y' /  
+          /     |   refl      /     |
+        a - - - - - - - - >  a      |
+        ^       |           ^       |                    ^   j
+        |       |           |       |                  k | /
+        |       |           |       |                    ∙ — >
+        |       |           |       |                      i
+        |       c₀ - - - - - | - - >c₀  
+              /             |     /
+        |   /               |   / 
+        | /                 | /
+        c₀ - - - - - - - - > c₀
+
+-- ```
+-- isContrisContr≡ : {A : Type ℓ} (c : isContr A) (a b : A) → isContr (a ≡ b)
+-- -- Hint: You should use an `hcomp` for both halves. Draw them out!
+-- -- Hint 2: In the second component, you only need three sides of a cube.
+-- isContrisContr≡ (c₀ , c) a b = patha≡b (c a) (c b) , λ y i j → hcomp (face y i j) c₀
+--   where
+--     patha≡b : (p : c₀ ≡ a) (q : c₀ ≡ b) → a ≡ b
+--     patha≡b p q i = hcomp (λ { j (i = i0) → p j ; j (i = i1) → q j }) (c₀)
+    
+--     face : (y : a ≡ b) → (i : I) → (j : I) → (k : I) → Partial (∂ i ∨ ∂ j) A  
+--     face y i j k (i = i0) = {!  !}
+--     face y i j k (i = i1) = {!   !}
+--     face y i j k (j = i0) = {!   !}
+--     face y i j k (j = i1) = {!   !}
+-- ```      

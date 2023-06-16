@@ -140,7 +140,7 @@ has an element, then it is contractible.
 ```
 Prop-with-point-isContr : isProp A → A → isContr A
 -- Exercise:
-Prop-with-point-isContr p a = {!!}
+Prop-with-point-isContr p a = a , p a
 ```
 
 We can go the other way too. If, whenever `A` has an element, it has a
@@ -149,7 +149,12 @@ unique element, then it has at most one element.
 ```
 isContr-prop-with-point : (A → isContr A) → isProp A
 -- Exercise:
-isContr-prop-with-point c x y = {!!}
+isContr-prop-with-point c x y = 
+  let c1 = fst (c x)
+      contract = snd (c x)
+  in x ≡⟨ sym (contract x) ⟩
+    c1 ≡⟨ contract y ⟩
+    y ∎  
 ```
 
 More interestingly, we can show that being contractible is a
@@ -228,7 +233,7 @@ isProp→SquareP {A = A} isPropB {a = a} r s t u i j =
            ; k (j = i1) → isPropB i i1 (base i i1) (s i) k
         }) (base i j) where
     base : (i j : I) → A i j
-    base i j = {!!}
+    base i j = transport (λ k → A (k ∧ i) (k ∧ j)) a
 
 isPropIsProp : isProp (isProp A)
 isPropIsProp isProp1 isProp2 i a b = isProp→SquareP (λ _ _ → isProp1) refl refl (isProp1 a b) (isProp2 a b) i
@@ -248,7 +253,7 @@ isPropFun : {A : Type ℓ} {B : A → Type ℓ'}
             (p : ∀ a → isProp (B a))
           → isProp (∀ a → B a)
 -- Exercise
-isPropFun p f g = {!!}
+isPropFun p f g i a =  p a (f a) (g a) i
 ```
 
 As a special case of "for all", we get "implies". If `A` and `B` are
@@ -268,6 +273,9 @@ contractible whenever `B` is contractible.
 isContr→ : isContr B → isContr (A → B)
 fst (isContr→ (cB , hB)) = λ _ → cB
 snd (isContr→ (cB , hB)) f i a = hB (f a) i
+
+isPropisEquiv : (f : A → B) → isProp ((y : B) → isContr (fiber f y))
+isPropisEquiv f = isPropFun λ y → isPropIsContr
 ```
 
 If two propositions imply each other, then they are in fact
@@ -278,10 +286,10 @@ propExt : isProp A → isProp B
         → (A → B) → (B → A)
         → Iso A B
 -- Exercise
-Iso.fun (propExt isPropA isPropB f g) = {!!}
-Iso.inv (propExt isPropA isPropB f g) = {!!}
-Iso.rightInv (propExt isPropA isPropB f g) b = {!!}
-Iso.leftInv (propExt isPropA isPropB f g) a = {!!}
+Iso.fun (propExt isPropA isPropB f g) = λ x → f x
+Iso.inv (propExt isPropA isPropB f g) = λ x → g x
+Iso.rightInv (propExt isPropA isPropB f g) b = λ i → isPropB (f (g b)) b i
+Iso.leftInv (propExt isPropA isPropB f g) a = λ i → isPropA (g (f a)) a i
 ```
 
 We could in fact show that `A iffP B` is isomorphic to `Iso A B`.
@@ -304,7 +312,7 @@ The "and" of two proposition `A` and `B` is the type of pairs `A × B`.
 ```
 isProp× : isProp A → isProp B → isProp (A × B)
 -- Exercise
-isProp× pA pB (a1 , b1) (a2 , b2) i = {!!}
+isProp× pA pB (a1 , b1) (a2 , b2) i = pA a1 a2 i , pB b1 b2 i
 ```
 
 Similarly to `→`, if `A` and `B` are true (contracible), then `A × B` should
@@ -319,13 +327,20 @@ One last useful closure condition: if `A` is a retract of `B`, then in
 some sense `A` is a continuous shrinking of `B`. And so if `B` is a
 proposition, then `A` must be too:
 
+           
+        x - - - > y
+        ^         ^
+        |         |                       ^
+        |         |                    j |
+     g f x — — — >g f y                    ∙ — >
+                                       i
 ```
 isPropRetract :
   (f : A → B) (g : B → A)
   → (h : retract f g)
   → isProp B → isProp A
 -- Exercise
-isPropRetract f g h isPropB x y i = {!!}
+isPropRetract f g h isPropB x y i = hcomp (λ {j (i = i0) → h x j ; j (i = i1) → h y j}) (cong g (isPropB (f x) (f y)) i) 
 ```
 
 And similarly for contractible types:
@@ -335,8 +350,8 @@ isContrRetract :
   → (h : retract f g)
   → isContr B → isContr A
 -- Exercise
-fst (isContrRetract f g h (center , contr)) = {!!}
-snd (isContrRetract f g h (center , contr)) x = {!!}
+fst (isContrRetract f g h (center , contr)) = g center
+snd (isContrRetract f g h (center , contr)) x = trans (cong g (contr (f x))) (h x)
 ```
 
 ## Propositional Truncation
@@ -408,7 +423,7 @@ When `P` is already a proposition, truncating it should do nothing:
 ```
 isProp→equiv∃ : isProp P → Iso P (∃ P)
 -- Exercise
-isProp→equiv∃ isPropP = ?
+isProp→equiv∃ isPropP = {!   !}
 ```
 
 If `P : A → Type` is a family of propositions on `A` --- that is, a
