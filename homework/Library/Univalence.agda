@@ -6,8 +6,8 @@ open import Cubical.Foundations.Prelude using (cong)
 open import Cubical.Foundations.Function using (_∘_)
 
 open import homework.1--Type-Theory.1-2--Inductive-Types
-open import homework.1--Type-Theory.1-1--Types-and-Functions
-open import homework.2--Paths-and-Identifications.2-1--Paths
+open import homework.1--Type-Theory.1-1--Types-and-Functions hiding (_∘_)
+open import homework.2--Paths-and-Identifications.2-1--Paths hiding (cong)
 open import homework.2--Paths-and-Identifications.2-2--Path-Algebra-and-J
 open import homework.2--Paths-and-Identifications.2-4--Composition-and-Filling
 

@@ -481,14 +481,14 @@ TotallyOrderedTwoElementSet = Σ[ F ∈ Type ] (Bool ≡ F)
 
 Challenge:
 ```
-∃-Idem-×-L-Iso : Iso (∃ (∃ A) × B) (∃ A × B)
-∃-Idem-×-L-Iso = {!   !}
+-- ∃-Idem-×-L-Iso : Iso (∃ (∃ A) × B) (∃ A × B)
+-- ∃-Idem-×-L-Iso = {!   !}
 
-∃-Idem-×-R-Iso : Iso (∃ A × (∃ B)) (∃ A × B)
-∃-Idem-×-R-Iso = {!!}
+-- ∃-Idem-×-R-Iso : Iso (∃ A × (∃ B)) (∃ A × B)
+-- ∃-Idem-×-R-Iso = {!!}
 
-∃-×-Iso : Iso ((∃ A) × (∃ B)) (∃ A × B)
-∃-×-Iso = {!!}
+-- ∃-×-Iso : Iso ((∃ A) × (∃ B)) (∃ A × B)
+-- ∃-×-Iso = {!!}
 ```
 
 ## Decidable Types
@@ -539,11 +539,11 @@ Dec-Idem (yes (yes p)) = yes p
 Dec-Idem (yes (no ¬p)) = no ¬p
 Dec-Idem (no ¬p) = no λ x → ¬p (yes x)
 
-∃-Dec : Iso (Dec (∃ A)) (∃ (Dec A))
-∃-Dec = {!!}
+-- ∃-Dec : Iso (Dec (∃ A)) (∃ (Dec A))
+-- ∃-Dec = {!!}
 
-¬¬-Dec : Iso (¬ ¬ ∃ A) (¬ ¬ A)
-¬¬-Dec = {!!}
+-- ¬¬-Dec : Iso (¬ ¬ ∃ A) (¬ ¬ A)
+-- ¬¬-Dec = {!!}
 
 Dec→SplitSupport : Dec A → (∃ A → A)
 Dec→SplitSupport (yes p) y = p
