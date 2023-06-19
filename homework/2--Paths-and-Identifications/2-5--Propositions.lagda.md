@@ -3,8 +3,9 @@
 module homework.2--Paths-and-Identifications.2-5--Propositions where
 
 open import Cubical.Data.Sigma.Base using (Σ ; _×_)
+open import Cubical.Foundations.Function using (_∘_; _$_)
 
-open import homework.1--Type-Theory.1-1--Types-and-Functions
+open import homework.1--Type-Theory.1-1--Types-and-Functions hiding (_∘_)
 open import homework.1--Type-Theory.1-2--Inductive-Types
 open import homework.1--Type-Theory.1-3--Propositions-as-Types hiding (¬_)
 open import homework.2--Paths-and-Identifications.2-1--Paths
@@ -415,7 +416,8 @@ functions between types to functions between their truncations. If we have a fun
 ```
 ∃-map : (A → B) → (∃ A → ∃ B)
 -- Exercise
-∃-map f = {!!}
+∃-map f ∣ x ∣ = ∣ f x ∣
+∃-map f (squash x y i) = squash (∃-map f x) (∃-map f y) i 
 ```
 
 When `P` is already a proposition, truncating it should do nothing:
@@ -423,7 +425,7 @@ When `P` is already a proposition, truncating it should do nothing:
 ```
 isProp→equiv∃ : isProp P → Iso P (∃ P)
 -- Exercise
-isProp→equiv∃ isPropP = {!   !}
+isProp→equiv∃ isPropP = propExt isPropP isProp-∃ ∣_∣ (∃-rec isPropP λ p → p)
 ```
 
 If `P : A → Type` is a family of propositions on `A` --- that is, a
@@ -466,18 +468,27 @@ there exists an element in `A ⊎ B`.
 ```
 _orP_ : Type ℓ → Type ℓ' → Type _
 A orP B = ∃ (A ⊎ B)
+
+BAut : (X : Type ℓ) (x : X) → Type ℓ
+BAut X x = Σ[ y ∈ X ] ∃ x ≡ y
+
+TwoElementSet : Type _
+TwoElementSet = BAut _ Bool
+
+TotallyOrderedTwoElementSet : Type _
+TotallyOrderedTwoElementSet = Σ[ F ∈ Type ] (Bool ≡ F)
 ```
 
 Challenge:
 ```
-∃-Idem-×-L-Iso : Iso (∃ (∃ A) × B) (∃ A × B)
-∃-Idem-×-L-Iso = {!!}
+-- ∃-Idem-×-L-Iso : Iso (∃ (∃ A) × B) (∃ A × B)
+-- ∃-Idem-×-L-Iso = {!   !}
 
-∃-Idem-×-R-Iso : Iso (∃ A × (∃ B)) (∃ A × B)
-∃-Idem-×-R-Iso = {!!}
+-- ∃-Idem-×-R-Iso : Iso (∃ A × (∃ B)) (∃ A × B)
+-- ∃-Idem-×-R-Iso = {!!}
 
-∃-×-Iso : Iso ((∃ A) × (∃ B)) (∃ A × B)
-∃-×-Iso = {!!}
+-- ∃-×-Iso : Iso ((∃ A) × (∃ B)) (∃ A × B)
+-- ∃-×-Iso = {!!}
 ```
 
 ## Decidable Types
@@ -524,16 +535,19 @@ Dec→Stable (yes x) = λ _ → x
 Dec→Stable (no x) = λ f → ∅-rec (f x)
 
 Dec-Idem : Dec (Dec A) → Dec A
-Dec-Idem = {!!}
+Dec-Idem (yes (yes p)) = yes p
+Dec-Idem (yes (no ¬p)) = no ¬p
+Dec-Idem (no ¬p) = no λ x → ¬p (yes x)
 
-∃-Dec : Iso (Dec (∃ A)) (∃ (Dec A))
-∃-Dec = {!!}
+-- ∃-Dec : Iso (Dec (∃ A)) (∃ (Dec A))
+-- ∃-Dec = {!!}
 
-¬¬-Dec : Iso (¬ ¬ ∃ A) (¬ ¬ A)
-¬¬-Dec = {!!}
+-- ¬¬-Dec : Iso (¬ ¬ ∃ A) (¬ ¬ A)
+-- ¬¬-Dec = {!!}
 
 Dec→SplitSupport : Dec A → (∃ A → A)
-Dec→SplitSupport = {!!}
+Dec→SplitSupport (yes p) y = p
+Dec→SplitSupport (no ¬p) y = ∅-rec (∃-rec isProp∅ ¬p y)
 ```
 
 ## Subtypes
@@ -543,6 +557,16 @@ With this definition of proposition, we can define a good notion of
 `A`, then the subtype of `A` carved out by `B` will be the type of
 pairs `Σ[ a ∈ A ] B a` whose elements are pairs `(a , b)` where
 `a : A` and `b : B a` is a witness that `B` is true of `a`.
+
+```
+isPropIsEvenP : (n : ℕ) → isProp (isEvenP n)
+isPropIsEvenP zero = isProp⊤
+isPropIsEvenP (suc zero) = isProp∅
+isPropIsEvenP (suc (suc n)) = isPropIsEvenP n
+
+Evens : Type
+Evens = Σ[ n ∈ ℕ ] isEvenP n
+```
 
 The main lemma to prove about subtypes is that they have the same
 paths as the types they came from. That is, `(a1 , b1) ≡ (a2 , b2)` is
